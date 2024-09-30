@@ -1,4 +1,20 @@
 {
-  "name": "nativeApp",
-  "displayName": "nativeApp"
+  "expo": {
+    "name": "TimerGame",
+    "slug": "timergame",
+    "version": "1.0.0",
+    "ios": {
+      "userInterfaceStyle": "automatic"
+    },
+    "scheme": "TimerGame",
+    "extra": {
+      "eas": {
+        "projectId": "91ffc580-738d-4e3b-9510-58270d353d74"
+      }
+    },
+    "android": {
+      "package": "com.raedbash.timergame",
+      "userInterfaceStyle": "automatic"
+    }
+  }
 }
