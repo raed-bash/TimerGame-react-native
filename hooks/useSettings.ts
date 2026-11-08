@@ -1,6 +1,5 @@
 import MainContext from "@/contexts/MainContext";
-import { AsyncStorageHelpers } from "@/utils";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 
 export default function useSettings() {
   const { gameTimer, setGameTimer, playerNames, setPlayerNames } =
@@ -19,26 +18,14 @@ export default function useSettings() {
     setPlayerNames((playerNames) => [playerNames[0], name]);
   };
 
-  useEffect(() => {
-    async function setStorage() {
-      await AsyncStorageHelpers.setItem("gameTimer", gameTimer.toString());
-    }
-    setStorage();
-  }, [gameTimer]);
-
-  useEffect(() => {
-    async function setStorage() {
-      await AsyncStorageHelpers.setItem("player1Name", playerNames[0]);
-
-      await AsyncStorageHelpers.setItem("player2Name", playerNames[1]);
-    }
-    setStorage();
-  }, [playerNames]);
+  const swapPlayers = () => setPlayerNames(([a, b]) => [b, a]);
 
   return {
     handleGameTimerChange,
     handlePlayer1NameChange,
     handlePlayer2NameChange,
+    swapPlayers,
+    setPlayerNames,
     player1Name: playerNames[0],
     player2Name: playerNames[1],
     gameTimer,
