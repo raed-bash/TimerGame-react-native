@@ -3,11 +3,13 @@ import React, { useEffect, useState } from "react";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { Colors } from "@/constants/Colors";
 import MainContext, { MainContextDefaultValue } from "@/contexts/MainContext";
-import { useColorScheme } from "react-native";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import AsyncStorageHelpers from "@/utils/AsyncStorageHelpers";
+import useTranslation from "@/hooks/useTranslation";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
 
   const [gameTimer, setGameTimer] = useState<number>(
     MainContextDefaultValue.gameTimer
@@ -22,7 +24,7 @@ export default function TabLayout() {
         parseInt(
           (await AsyncStorageHelpers.getItem("gameTimer")) ||
             MainContextDefaultValue.gameTimer.toString()
-        )
+        ) || MainContextDefaultValue.gameTimer // older builds could store "NaN"
       );
 
       setPlayerNames([
@@ -48,7 +50,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "Home",
+            title: t.home,
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon
                 name={focused ? "home" : "home-outline"}
@@ -60,7 +62,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="settings"
           options={{
-            title: "Settings",
+            title: t.settings,
 
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon
