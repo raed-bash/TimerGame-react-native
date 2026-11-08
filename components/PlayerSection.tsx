@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { PlayerColors } from "@/constants/Colors";
 import Timer from "./Timer";
 import useTranslation from "@/hooks/useTranslation";
@@ -16,6 +17,10 @@ type PlayerSectionProps = {
   color?: "red" | "blue";
   /** Rotate 180° so a player sitting across the device can read it */
   flipped?: boolean;
+  /** The ball just landed here: shake once */
+  hit?: boolean;
+  /** Shown under the timer when it's not this player's turn (e.g. "Tap to start") */
+  hint?: string;
 };
 
 // The whole half is the button, so it is easy to hit without looking.
@@ -31,48 +36,72 @@ export default function PlayerSection(props: PlayerSectionProps) {
     playerPress = () => {},
     color = "red",
     flipped = false,
+    hit = false,
+    hint,
   } = props;
+
+  const shake = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!hit) return;
+    const to = (v: number) =>
+      Animated.timing(shake, {
+        toValue: v,
+        duration: 50,
+        useNativeDriver: true,
+      });
+    Animated.sequence([to(12), to(-12), to(9), to(-9), to(4), to(0)]).start();
+  }, [hit]);
 
   const palette = PlayerColors[color];
   const { t } = useTranslation();
 
   return (
-    <Pressable
-      onPress={playerPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${playerName}, ${t.seconds(playerTimer.toFixed(1))}`}
-      style={({ pressed }) => [
-        styles.section,
-        {
-          backgroundColor: waiting ? palette.dim : palette.main,
-          opacity: pressed ? 0.9 : 1,
-          transform: [{ rotate: flipped ? "180deg" : "0deg" }],
-        },
-        myTurn && styles.activeBorder,
-      ]}
+    <Animated.View
+      style={[styles.wrapper, { transform: [{ translateX: shake }] }]}
     >
-      {subject && (
-        <View style={styles.topicPill}>
-          <Text style={styles.topicLabel}>{t.topic}</Text>
-          <Text style={styles.topic}>{subject}</Text>
-        </View>
-      )}
+      <Pressable
+        onPress={playerPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${playerName}, ${t.seconds(playerTimer.toFixed(1))}`}
+        style={({ pressed }) => [
+          styles.section,
+          {
+            backgroundColor: waiting ? palette.dim : palette.main,
+            opacity: pressed ? 0.9 : 1,
+            transform: [{ rotate: flipped ? "180deg" : "0deg" }],
+          },
+          myTurn && styles.activeBorder,
+        ]}
+      >
+        {subject && (
+          <View style={styles.topicPill}>
+            <Text style={styles.topicLabel}>{t.topic}</Text>
+            <Text style={styles.topic}>{subject}</Text>
+          </View>
+        )}
 
-      <Timer timer={playerTimer} myTurn={myTurn} progress={playerTimer / gameTimer} />
+        <Timer
+hint={hint}
+          timer={playerTimer}
+          myTurn={myTurn}
+          progress={playerTimer / gameTimer}
+        />
 
-      <View style={styles.nameRow}>
-        <Text style={styles.name} numberOfLines={1}>
-          {playerName}
-        </Text>
-        <View style={styles.winsPill}>
-          <Text style={styles.wins}>🏆 {wins}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={1}>
+            {playerName}
+          </Text>
+          <View style={styles.winsPill}>
+            <Text style={styles.wins}>🏆 {wins}</Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: { flex: 1, width: "100%" },
   section: {
     flex: 1,
     width: "100%",
@@ -90,9 +119,24 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     maxWidth: "100%",
   },
-  topicLabel: { color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: "600" },
-  topic: { color: "#fff", fontSize: 28, fontWeight: "800", writingDirection: "rtl", textAlign: "center" },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 10, maxWidth: "100%" },
+  topicLabel: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  topic: {
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "800",
+    writingDirection: "rtl",
+    textAlign: "center",
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    maxWidth: "100%",
+  },
   name: { color: "#fff", fontSize: 24, fontWeight: "700", flexShrink: 1 },
   winsPill: {
     backgroundColor: "rgba(0,0,0,0.25)",

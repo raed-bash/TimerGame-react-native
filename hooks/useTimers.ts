@@ -3,14 +3,29 @@ import MainContext from "@/contexts/MainContext";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import useSelectWinner from "./useSelectWinner";
+import { getPreferences } from "./usePreferences";
+import type { Turn } from "./useHistory";
 import PlayerHelpers from "@/utils/PlayerHelpers";
 import { PlayerTimers, PlayerType } from "@/types";
 
 // Haptics are unavailable on web; ignore the rejection there.
-const buzz = (style = Haptics.ImpactFeedbackStyle.Light) =>
-  Haptics.impactAsync(style).catch(() => {});
+const buzz = (style = Haptics.ImpactFeedbackStyle.Light) => {
+  if (getPreferences().vibration === "on") Haptics.impactAsync(style).catch(() => {});
+};
+const buzzWin = () => {
+  if (getPreferences().vibration === "on")
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+};
 
-export default function useTimers() {
+export type GameResult = {
+  winner: PlayerType;
+  startedAt: number;
+  endedAt: number;
+  finalTimers: PlayerTimers;
+  turns: Turn[];
+};
+
+export default function useTimers(options: { onGameEnd?: (result: GameResult) => void } = {}) {
   const { gameTimer } = useContext(MainContext);
   const playerTime = gameTimer / 2;
 
@@ -18,18 +33,30 @@ export default function useTimers() {
   // Player1's first score, Player2's second score
   const [playerTimers, setPlayerTimers] =
     useState<PlayerTimers>(defaultPlayerTimer);
-  // Who is the player that will start?
+  // Whose time is currently draining
   const [startPlayer, setStartPlayer] = useState<PlayerType | null>(null);
   const [paused, setPaused] = useState(false);
   const [winner, setWinner] = useState<PlayerType | null>(null);
-  const [wins, setWins] = useState<[number, number]>([0, 0]);
   const intervalIdRef = useRef<NodeJS.Timeout>();
+  // Turn log for the history screen; a ref because it changes every tick.
+  const turnsRef = useRef<Turn[]>([]);
+  const startedAtRef = useRef(0);
 
   const handleStartPlayer = (player: PlayerType) => {
     if (paused || winner !== null) return;
+    if (startPlayer === null) {
+      startedAtRef.current = Date.now();
+      turnsRef.current = [{ player, duration: 0 }];
+      setStartPlayer(player);
+      buzz();
+      return;
+    }
+    // Only the player whose time is draining can pass the turn.
+    if (player !== startPlayer) return;
+    const next = PlayerHelpers.getOppositePlayer(player);
+    turnsRef.current.push({ player: next, duration: 0 });
+    setStartPlayer(next);
     buzz();
-    const oppositePlayer = PlayerHelpers.getOppositePlayer(player);
-    setStartPlayer(startPlayer === null ? player : oppositePlayer);
   };
 
   const handleReset = () => {
@@ -37,6 +64,7 @@ export default function useTimers() {
     setPaused(false);
     setWinner(null);
     setPlayerTimers(defaultPlayerTimer);
+    turnsRef.current = [];
   };
 
   const togglePause = () => {
@@ -48,10 +76,14 @@ export default function useTimers() {
   const handleWinner = (player: PlayerType) => {
     setStartPlayer(null);
     setWinner(player);
-    setWins((w) => (player === 0 ? [w[0] + 1, w[1]] : [w[0], w[1] + 1]));
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-      () => {}
-    );
+    buzzWin();
+    options.onGameEnd?.({
+      winner: player,
+      startedAt: startedAtRef.current,
+      endedAt: Date.now(),
+      finalTimers: playerTimers,
+      turns: turnsRef.current.map((t) => ({ ...t, duration: PlayerHelpers.parseTimer(t.duration) })),
+    });
   };
 
   useFocusEffect(
@@ -67,15 +99,23 @@ export default function useTimers() {
 
   useEffect(() => {
     if (startPlayer !== null && !paused) {
+      // Use real elapsed time: intervals run late on busy devices.
+      let last = Date.now();
       intervalIdRef.current = setInterval(() => {
+        const now = Date.now();
+        const step = (now - last) / 1000;
+        last = now;
+        const turn = turnsRef.current[turnsRef.current.length - 1];
+        if (turn) turn.duration += step;
         setPlayerTimers((playerTimers) =>
           new PlayerHelpers(
             playerTimers,
             startPlayer,
-            gameTimer
+            gameTimer,
+            step
           ).getPlayerTimer()
         );
-      }, 10);
+      }, 30);
     }
 
     return () => {
@@ -91,6 +131,5 @@ export default function useTimers() {
     playerTimers,
     paused,
     winner,
-    wins,
   };
 }

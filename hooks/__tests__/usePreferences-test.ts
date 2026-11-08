@@ -23,9 +23,9 @@ function renderHook<T>(hook: () => T) {
 
 it("persists and broadcasts changes", () => {
   const { result } = renderHook(() => useTranslation());
-  expect(result.current.t.home).toBe("Home");
+  expect(result.current.t.settings).toBe("Settings");
   act(() => setPreference("language", "ar"));
-  expect(result.current.t.home).toBe("الرئيسية");
+  expect(result.current.t.settings).toBe("الإعدادات");
   expect(result.current.isRTL).toBe(true);
   expect(store.language).toBe("ar");
 });
@@ -35,5 +35,5 @@ it("falls back to defaults for unknown stored values", async () => {
   store.language = "fr";
   const { result } = renderHook(() => usePreferences());
   await act(loadPreferences);
-  expect(result.current).toEqual({ theme: "system", language: "en" });
+  expect(result.current).toEqual({ theme: "system", language: "en", vibration: "on" });
 });

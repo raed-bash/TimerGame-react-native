@@ -32,3 +32,6 @@ export const PlayerColors = {
   blue: { main: '#2563EB', dim: '#1E3A8A' },
   red: { main: '#E11D48', dim: '#881337' },
 };
+
+/** Brand accent (the ball's orange): primary buttons, active tab. */
+export const Accent = '#F97316';

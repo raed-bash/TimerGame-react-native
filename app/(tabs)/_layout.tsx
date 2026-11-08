@@ -1,78 +1,49 @@
 import { Tabs } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
-import { Colors } from "@/constants/Colors";
-import MainContext, { MainContextDefaultValue } from "@/contexts/MainContext";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import AsyncStorageHelpers from "@/utils/AsyncStorageHelpers";
+import { useTheme } from "@/hooks/useColorScheme";
 import useTranslation from "@/hooks/useTranslation";
+import { Accent } from "@/constants/Colors";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const theme = useTheme();
   const { t } = useTranslation();
 
-  const [gameTimer, setGameTimer] = useState<number>(
-    MainContextDefaultValue.gameTimer
-  );
-  const [playerNames, setPlayerNames] = useState<[string, string]>(
-    MainContextDefaultValue.playerNames
-  );
-
-  useEffect(() => {
-    async function getStorage() {
-      setGameTimer(
-        parseInt(
-          (await AsyncStorageHelpers.getItem("gameTimer")) ||
-            MainContextDefaultValue.gameTimer.toString()
-        ) || MainContextDefaultValue.gameTimer // older builds could store "NaN"
-      );
-
-      setPlayerNames([
-        (await AsyncStorageHelpers.getItem("player1Name")) ||
-          MainContextDefaultValue.playerNames[0],
-        (await AsyncStorageHelpers.getItem("player2Name")) ||
-          MainContextDefaultValue.playerNames[1],
-      ]);
-    }
-    getStorage();
-  }, []);
-
   return (
-    <MainContext.Provider
-      value={{ gameTimer, setGameTimer, playerNames, setPlayerNames }}
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Accent,
+        tabBarInactiveTintColor: theme.tabIconDefault,
+        headerShown: false,
+      }}
     >
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-          headerShown: false,
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: t.home,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? "game-controller" : "game-controller-outline"} color={color} />
+          ),
         }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: t.home,
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon
-                name={focused ? "home" : "home-outline"}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: t.settings,
-
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon
-                name={focused ? "settings" : "settings-outline"}
-                color={color}
-              />
-            ),
-          }}
-        />
-      </Tabs>
-    </MainContext.Provider>
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: t.history,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? "time" : "time-outline"} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: t.settings,
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? "settings" : "settings-outline"} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }

@@ -7,12 +7,13 @@ export type TimerProps = {
   myTurn?: boolean;
   /** 0..1 share of the total game time this player holds */
   progress?: number;
+  hint?: string;
 };
 
 // Drawn on top of the player's coloured half, so it is always white (yellow when low).
 export default function Timer(props: TimerProps) {
-  const { timer, myTurn, progress = 0.5 } = props;
-  const { t } = useTranslation();
+  const { timer, myTurn, progress = 0.5, hint } = props;
+  const { t, isRTL } = useTranslation();
   const pulse = useRef(new Animated.Value(1)).current;
   const color = progress < 0.2 ? "#FDE047" : "#fff";
 
@@ -44,7 +45,8 @@ export default function Timer(props: TimerProps) {
           ]}
         />
       </View>
-      <Text style={styles.hint}>{myTurn ? t.sayOneThenTap : " "}</Text>
+      {/* letterSpacing breaks Arabic letter joining */}
+      <Text style={[styles.hint, isRTL && styles.noSpacing]}>{myTurn ? t.sayOneThenTap : hint ?? " "}</Text>
     </View>
   );
 }
@@ -68,4 +70,5 @@ const styles = StyleSheet.create({
   },
   fill: { height: "100%", borderRadius: 5 },
   hint: { color: "#fff", fontSize: 13, fontWeight: "700", letterSpacing: 1.5 },
+  noSpacing: { letterSpacing: 0, fontSize: 15 },
 });
