@@ -5,16 +5,20 @@ export default class PlayerHelpers {
   public oppositePlayer: PlayerType;
   public startPlayer: PlayerType;
   public gameTimer: number;
+  public step: number;
 
+  /** @param step seconds elapsed since the last tick */
   constructor(
     playerTimer: PlayerTimers,
     startPlayer: PlayerType,
-    gameTimer: number
+    gameTimer: number,
+    step = 0.01
   ) {
     this.playerTimer = PlayerHelpers.getNewPlayerTimers(playerTimer);
     this.startPlayer = startPlayer;
     this.oppositePlayer = PlayerHelpers.getOppositePlayer(startPlayer);
     this.gameTimer = gameTimer;
+    this.step = step;
     this.handleNewScore();
   }
 
@@ -39,12 +43,11 @@ export default class PlayerHelpers {
     const startPlayer = this.startPlayer;
     const oppositePlayer = this.oppositePlayer;
 
-    if (playerTimer[startPlayer] > 0) {
-      playerTimer[startPlayer] -= 0.01;
-    }
-
-    if (playerTimer[oppositePlayer] < this.gameTimer) {
-      playerTimer[oppositePlayer] += 0.01;
-    }
+    // Move time from the active player to the other; the total stays gameTimer.
+    const moved = Math.max(0, Math.min(this.step, playerTimer[startPlayer]));
+    playerTimer[startPlayer] = PlayerHelpers.parseTimer(playerTimer[startPlayer] - moved);
+    playerTimer[oppositePlayer] = PlayerHelpers.parseTimer(
+      Math.min(this.gameTimer, playerTimer[oppositePlayer] + moved)
+    );
   }
 }
