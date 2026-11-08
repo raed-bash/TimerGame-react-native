@@ -1,50 +1,42 @@
-# Welcome to your Expo app 👋
+# Timer Game
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A two-player, one-phone word game. Players sit on opposite sides of the phone, and the top half is turned upside down so the player opposite can read it.
 
-## Get started
+## How to play
 
-1. Install dependencies
+1. Enter both names on the menu, pick the game length and tap **Start game**.
+2. A random topic appears (for example **دول**, countries).
+3. Tap your half to start. While your time drains to your opponent, say a word from the topic, then tap to pass the turn.
+4. The first player to hold the whole game time wins, and the ball falls on the loser.
 
-   ```bash
-   npm install
-   ```
+## Features
 
-2. Start the app
+- Start menu with player names, a swap button, game length and the head-to-head score
+- Arabic topics loaded from [`data/subjects.json`](data/subjects.json) on GitHub, with a bundled copy for offline play
+- Game history: every finished game with winner, topic, date, play time, per-player answers (average, fastest and slowest) and a turn-by-turn timeline, plus a leaderboard
+- Pause, reset, new topic, haptics (can be turned off), and a ball animation
+- English and Arabic, with light, dark or system theme
 
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Development
 
 ```bash
-npm run reset-project
+nvm use          # Node 20, from .nvmrc
+npm install
+npx expo start   # then open on a device, emulator or web
+npm test         # Jest
+npx tsc --noEmit # type check
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+To add or change topics, edit `data/subjects.json` and push. The app picks up the new list on its next launch.
 
-## Learn more
+### Project layout
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Path | What |
+| --- | --- |
+| `app/(tabs)/index.tsx` | Start menu |
+| `app/game.tsx` → `components/TimersGame.tsx` | The game board |
+| `app/(tabs)/history.tsx`, `app/history/[id].tsx` | History list and game details |
+| `app/(tabs)/settings.tsx` | Theme, language, vibration and clearing history |
+| `hooks/useTimers.ts` | Game clock, turns and the winner |
+| `hooks/useHistory.ts`, `utils/gameStats.ts` | Saved games and their statistics |
+| `constants/i18n.ts` | English and Arabic text |

@@ -23,6 +23,11 @@
     "icon": "./assets/images/icon.png",
     "web": {
       "favicon": "./assets/images/favicon.png"
+    },
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#111827"
     }
   }
 }
