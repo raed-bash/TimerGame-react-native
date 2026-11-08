@@ -34,7 +34,8 @@ export default function AppButton(props: AppButtonProps) {
     <Pressable
       style={({ pressed }) => [
         {
-          backgroundColor: pressed ? "lightgray" : color || "blue",
+          backgroundColor: color || "blue",
+          opacity: pressed ? 0.85 : 1,
         },
         styles.button,
         PressableProps,

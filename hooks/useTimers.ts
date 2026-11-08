@@ -1,12 +1,17 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import MainContext from "@/contexts/MainContext";
 import { useFocusEffect } from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
 import useSelectWinner from "./useSelectWinner";
 import PlayerHelpers from "@/utils/PlayerHelpers";
 import { PlayerTimers, PlayerType } from "@/types";
 
+// Haptics are unavailable on web; ignore the rejection there.
+const buzz = (style = Haptics.ImpactFeedbackStyle.Light) =>
+  Haptics.impactAsync(style).catch(() => {});
+
 export default function useTimers() {
-  const { gameTimer, playerNames } = useContext(MainContext);
+  const { gameTimer } = useContext(MainContext);
   const playerTime = gameTimer / 2;
 
   const defaultPlayerTimer: PlayerTimers = [playerTime, playerTime];
@@ -15,21 +20,38 @@ export default function useTimers() {
     useState<PlayerTimers>(defaultPlayerTimer);
   // Who is the player that will start?
   const [startPlayer, setStartPlayer] = useState<PlayerType | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [winner, setWinner] = useState<PlayerType | null>(null);
+  const [wins, setWins] = useState<[number, number]>([0, 0]);
   const intervalIdRef = useRef<NodeJS.Timeout>();
 
   const handleStartPlayer = (player: PlayerType) => {
+    if (paused || winner !== null) return;
+    buzz();
     const oppositePlayer = PlayerHelpers.getOppositePlayer(player);
     setStartPlayer(startPlayer === null ? player : oppositePlayer);
   };
 
   const handleReset = () => {
     setStartPlayer(null);
+    setPaused(false);
+    setWinner(null);
     setPlayerTimers(defaultPlayerTimer);
   };
 
-  const handleWinner = (winner: PlayerType) => {
-    handleReset();
-    alert(`The Winner is ${playerNames[winner]}`);
+  const togglePause = () => {
+    if (startPlayer === null || winner !== null) return;
+    buzz();
+    setPaused((p) => !p);
+  };
+
+  const handleWinner = (player: PlayerType) => {
+    setStartPlayer(null);
+    setWinner(player);
+    setWins((w) => (player === 0 ? [w[0] + 1, w[1]] : [w[0], w[1] + 1]));
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+      () => {}
+    );
   };
 
   useFocusEffect(
@@ -44,7 +66,7 @@ export default function useTimers() {
   });
 
   useEffect(() => {
-    if (startPlayer !== null) {
+    if (startPlayer !== null && !paused) {
       intervalIdRef.current = setInterval(() => {
         setPlayerTimers((playerTimers) =>
           new PlayerHelpers(
@@ -59,7 +81,16 @@ export default function useTimers() {
     return () => {
       clearInterval(intervalIdRef.current);
     };
-  }, [startPlayer]);
+  }, [startPlayer, paused]);
 
-  return { handleStartPlayer, startPlayer, playerTimers };
+  return {
+    handleStartPlayer,
+    handleReset,
+    togglePause,
+    startPlayer,
+    playerTimers,
+    paused,
+    winner,
+    wins,
+  };
 }

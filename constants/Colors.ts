@@ -14,6 +14,7 @@ export const Colors = {
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
+    surface: '#F1F3F5',
   },
   dark: {
     text: '#ECEDEE',
@@ -22,5 +23,12 @@ export const Colors = {
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    surface: '#202425',
   },
+};
+
+// main = active/idle-before-start, dim = waiting for the other player.
+export const PlayerColors = {
+  blue: { main: '#2563EB', dim: '#1E3A8A' },
+  red: { main: '#E11D48', dim: '#881337' },
 };

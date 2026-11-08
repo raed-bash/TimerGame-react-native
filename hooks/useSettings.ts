@@ -6,9 +6,9 @@ export default function useSettings() {
   const { gameTimer, setGameTimer, playerNames, setPlayerNames } =
     useContext(MainContext);
 
-  const handleGameTimerChange = (numString: string) => {
-    const number = parseInt(numString);
-    setGameTimer(number);
+  // Clamped so the game never starts already won (0) or never ends.
+  const handleGameTimerChange = (seconds: number) => {
+    setGameTimer(Math.min(300, Math.max(2, Math.round(seconds))));
   };
 
   const handlePlayer1NameChange = (name: string) => {
